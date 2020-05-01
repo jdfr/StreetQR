@@ -148,6 +148,35 @@ class DataCounter:
                         
                 data = self.memory[hour_min]
                 return data
+        
+        def get_minute_data(self, hour=None, minute=None):
+                """
+                Get just minute counters values
+                :param hour: int, 0..23, hour of the counter
+                :param minute: int, 0..59, minute of the counter
+                :return: dict, minute counter values
+                """
+                
+                data = self.get_data(hour=hour, minute=minute)
+                minute_data = {}
+                for key, value in data.items():
+                        if 'm' in key:
+                                minute_data[key] = value
+                
+                return minute_data
+
+        def get_daily_data(self):
+                """
+                Get just daily counters values
+                :return dict, daily counter values
+                """
+                data = self.build_data()
+                daily_data = {}
+                for key, value in data.items():
+                        if 'd' in key:
+                                daily_data[key] = value
+        
+                return daily_data
                 
         def build_data(self):
                 """
@@ -156,12 +185,12 @@ class DataCounter:
                 """
                 
                 data = {
-                        'left': self.total_minute_left,
-                        'right': self.total_minute_right,
-                        "total_now": self.total_minute,
-                        'total_left': self.total_today_left,
-                        'total_right': self.total_today_right,
-                        "total_today": self.total_today
+                        'lm': self.total_minute_left,
+                        'rm': self.total_minute_right,
+                        "tm": self.total_minute,
+                        'ld': self.total_today_left,
+                        'rd': self.total_today_right,
+                        "td": self.total_today
                 }
                 
                 return data
@@ -320,4 +349,3 @@ def print_bboxes_to_frame(frame, bboxes):
                 )
         
         return fr
-
