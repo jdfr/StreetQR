@@ -6,6 +6,7 @@ import time
 from utils import utils, classes, gpios, cameras, info, tracking, contour
 from trackers.bboxssd import BBox
 from trackers.bboxssdtracker import BBoxTracker
+from trackers.datatracker import DataTracker
 import platform
 import curses
 
@@ -31,7 +32,7 @@ if __name__ == "__main__":
         net = jetson.inference.detectNet(arch, sys.argv, threshold)
         
         # Start printing console
-        console = curses.initscr()
+        # console = curses.initscr()
         consoleConfig = info.ConsoleParams()
         consoleConfig.system = platform.system()
         
@@ -43,7 +44,9 @@ if __name__ == "__main__":
         ]
         
         # Initialize Trackers
+        data_counter = info.DataCounter()
         ped_tracker = BBoxTracker(15)
+        data_tracker = DataTracker(ped_tracker)
         
         # check if running on jetson
         is_jetson = utils.is_jetson_platform()
@@ -148,6 +151,17 @@ if __name__ == "__main__":
                 # Relate previous detections to new ones
                 # updating trackers
                 pedestrians = ped_tracker.update(ped_bboxes)
+                removed_pedestrians_directions = data_tracker.update()
+                
+                # ---------------------------------------
+                #
+                #           POST DATA TRACKING
+                #
+                # ---------------------------------------
+                
+                for direction in removed_pedestrians_directions:
+                        if direction == 'left': data_counter.add_left()
+                        if direction == 'right': data_counter.add_right()
                 
                 # ---------------------------------------
                 #
@@ -170,7 +184,7 @@ if __name__ == "__main__":
                         cv2.imshow("Crosswalk CAM", crosswalkFrame)
 
                 # SHOW DATA IN CONSOLE
-                info.print_console(console, consoleConfig)
+                # info.print_console(console, consoleConfig)
                 
                 # ----------------------------------
                 #
