@@ -22,6 +22,7 @@ class DataCounter:
                 self.total_today = 0
                 self.actual_min = dt.now().minute
                 self.actual_day = dt.now().day
+                
                 self.memory = defaultdict(self.build_data)
                 
         def add_right(self):
@@ -75,8 +76,11 @@ class DataCounter:
                 """
                 
                 if self.actual_min != dt.now().minute:
+                        print("is not the same minute")
                         self.reset_minute_counters()
+                        print(self.actual_min)
                         self.update_actual_min()
+                        print(self.actual_min)
                         self.check_day()
                         
         def update_totals(self):
@@ -97,6 +101,7 @@ class DataCounter:
                 """
                 Sets actual minute, int 0..59
                 """
+                print("minuto actualizado")
                 self.actual_min = dt.now().minute
                 
         def reset_minute_counters(self):
@@ -105,6 +110,8 @@ class DataCounter:
                 """
                 self.total_minute_left = 0
                 self.total_minute_right = 0
+                self.total_minute = 0
+
 
         def reset_daily_counters(self):
                 """
@@ -112,6 +119,8 @@ class DataCounter:
                 """
                 self.total_today_left = 0
                 self.total_today_right = 0
+                self.total_today = 0
+
                 
         def get_strftime_by_hour_minute(self, hour, minute):
                 """
@@ -194,7 +203,7 @@ class DataCounter:
                 }
                 
                 return data
-        
+
         def save_counters(self):
                 """
                 Save counters values to self.memory
@@ -211,7 +220,11 @@ class DataCounter:
                 """
                 self.memory.clear()
 
-
+        def reset(self):
+                self.reset_minute_counters()
+                self.reset_daily_counters()
+                self.clear_memory()
+        
 class ConsoleParams:
         """
         Class containing parameters to be presented
