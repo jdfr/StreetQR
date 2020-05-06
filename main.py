@@ -3,7 +3,10 @@ import jetson.utils
 import cv2
 import sys
 import time
-from utils import utils, classes, gpios, cameras, info, tracking, contour
+from firebase import firebase
+
+from datetime import datetime as dt
+from utils import utils, classes, info, backend
 from trackers.bboxssd import BBox
 from trackers.bboxssdtracker import BBoxTracker
 from trackers.datatracker import DataTracker
@@ -44,15 +47,18 @@ if __name__ == "__main__":
         ]
         
         # Initialize Trackers
-        data_counter = info.DataCounter()
         ped_tracker = BBoxTracker(15)
         data_tracker = DataTracker(ped_tracker)
-        
+        data_counter = info.DataCounter()
+
+        actual_min = dt.now().minute
+        actual_day = dt.now().day
+        people_crossing = False
+
+        fb = firebase.FirebaseApplication("https://smart-campus-uma.firebaseio.com/", None)
         # check if running on jetson
         is_jetson = utils.is_jetson_platform()
-        # Activate Board
-        if is_jetson: gpios.activate_jetson_board()
-        
+
         # ---------------------------------------
         #
         #      VIDEO CAPTURE INITIALIZATION
@@ -151,6 +157,9 @@ if __name__ == "__main__":
                 # Relate previous detections to new ones
                 # updating trackers
                 pedestrians = ped_tracker.update(ped_bboxes)
+                # If a person exits from camera visual field
+                # data_tracker will return his/her direction
+                # ['left, 'right, ...]
                 removed_pedestrians_directions = data_tracker.update()
                 
                 # ---------------------------------------
@@ -159,46 +168,71 @@ if __name__ == "__main__":
                 #
                 # ---------------------------------------
                 
+                # add people walking directions to counter
                 for direction in removed_pedestrians_directions:
-                        if direction == 'left': data_counter.add_left()
-                        if direction == 'right': data_counter.add_right()
+                        if direction == 'left':
+                                data_counter.add_left()
+                        if direction == 'right':
+                                data_counter.add_right()
+                        # If anyone has crossed the camera field
+                        # data can be sent to server
+                        # otherwise no data is sent
+                        people_crossing = True
                 
+                # Every minute
+                if actual_min != dt.now().minute:
+                        actual_min = dt.now().minute
+                        # Check if people crossed during the last minute
+                        if people_crossing:
+                                # if so, send new data to server
+                                data_minute = data_counter.get_minute_data()
+                                data_daily = data_counter.get_daily_data()
+                                backend.post_minute_data(data_minute, fb)
+                                backend.post_daily_data(data_daily, fb)
+                                people_crossing = False
+                        
+                        # Every day
+                        if actual_day != dt.now().day:
+                                actual_day = dt.now().day
+                                # Reset Local Counters
+                                data_counter.reset()
+                                # Update Server Counters
+                                data_daily = data_counter.get_daily_data()
+                                backend.post_daily_data(data_daily, fb)
+
                 # ---------------------------------------
                 #
                 #           SHOWING PROGRAM INFO
                 #
                 # ---------------------------------------
                 
-                consoleConfig.fps = 1.0 / (time.time() - start_time)
-
                 # Transform CUDA MALLOC to NUMPY frame is
                 # highly computationally expensive for Jetson Platforms
-                if SHOW and not is_jetson:
-
-                        # Print square detections into frame
-                        crosswalkFrame = info.print_items_to_frame(crosswalkFrame, pedestrians)
-                        # Print fps to frame
-                        crosswalkFrame = info.print_fps_on_frame(crosswalkFrame, consoleConfig.fps)
+                if SHOW:
                         
-                        # Show the frames
-                        cv2.imshow("Crosswalk CAM", crosswalkFrame)
+                        consoleConfig.fps = 1.0 / (time.time() - start_time)
+                        # SHOW DATA IN CONSOLE
+                        # info.print_console(console, consoleConfig)
+                        if not is_jetson:
 
-                # SHOW DATA IN CONSOLE
-                # info.print_console(console, consoleConfig)
-                
+                                # Print square detections into frame
+                                crosswalkFrame = info.print_items_to_frame(crosswalkFrame, pedestrians)
+                                # Print fps to frame
+                                crosswalkFrame = info.print_fps_on_frame(crosswalkFrame, consoleConfig.fps)
+                                
+                                # Show the frames
+                                cv2.imshow("Crosswalk CAM", crosswalkFrame)
+
                 # ----------------------------------
                 #
                 #           PROGRAM END
                 #
                 # ----------------------------------
-                
+
                 # Quit program pressing 'q'
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord("q"):
-                        # free GPIOs before quit
-                        if is_jetson:
-                                gpios.warning_OFF()
-                                gpios.deactivate_jetson_board()
+
                         # close any open windows
                         curses.endwin()
                         cv2.destroyAllWindows()
