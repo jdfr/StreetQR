@@ -76,11 +76,8 @@ class DataCounter:
                 """
                 
                 if self.actual_min != dt.now().minute:
-                        print("is not the same minute")
                         self.reset_minute_counters()
-                        print(self.actual_min)
                         self.update_actual_min()
-                        print(self.actual_min)
                         self.check_day()
                         
         def update_totals(self):
@@ -101,7 +98,7 @@ class DataCounter:
                 """
                 Sets actual minute, int 0..59
                 """
-                print("minuto actualizado")
+
                 self.actual_min = dt.now().minute
                 
         def reset_minute_counters(self):
