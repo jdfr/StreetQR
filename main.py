@@ -85,7 +85,7 @@ if __name__ == "__main__":
         elif is_jetson:
                 # If in jetson platform initialize Cameras from CUDA (faster inferences)
                 print('[*] Starting camera...')
-                Cam = jetson.utils.gstCamera(W, H, "dev/video0")
+                Cam = jetson.utils.gstCamera(W, H, "/dev/video0")
         
         else:
                 # If NOT in jetson platform initialize Cameras from cv2 (slower inferences)
@@ -103,6 +103,8 @@ if __name__ == "__main__":
         #      VIDEO PROCESSING MAIN LOOP
         #
         # ---------------------------------------
+
+        print('[*] Starting MAIN LOOP [*]')
         
         while True:
                 
