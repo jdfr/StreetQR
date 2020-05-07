@@ -12,7 +12,7 @@ def is_jetson_platform():
     :return: bool
     """
     
-    return platform.processor() != "x86_64"
+    return platform.processor() == 'aarch64'
 
 
 def frameToCuda(frame, width, height):
