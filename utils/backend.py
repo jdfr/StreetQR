@@ -7,34 +7,37 @@ import time
 fb = firebase.FirebaseApplication("https://smart-campus-uma.firebaseio.com/", None)
 
 
-def post_people_data(data, fb):
+def post_minute_data(data, fb):
         # Records people on Firebase by day and minute
 
         # Get timing
         now = datetime.datetime.now()
         day = now.date()
         hour_min = now.strftime("%H:%M")
+        print(hour_min)
         # Convert Data Dict to JSON
         data_json = json.dumps(data)
         # Set variable dinamically
         url = str('/streetqr/counter/' + str(day) + '/')
         # Post Data
         try:
-                fb.patch(url, {hour_min: str(data_json)})
+                fb.patch(url, {hour_min: data_json})
         except:
                 warnings.warn('Failed to POST data')
 
 
-def post_people_data_full_day(data,  fb):
+def post_daily_data(data, fb):
         # Records people on Firebase by day and minute
 
         # Get timing
-        yesterday = datetime.datetime.now().date() - datetime.timedelta(1)
+        # yesterday = datetime.datetime.now().date() - datetime.timedelta(1)
         # Set variable dinamically
-        url = str('/streetqr/counter/' + str(yesterday) + '/')
+        url = str('/streetqr/counter/total/')
+        data_json = json.dumps(data)
+
         # Post Data
         try:
-                fb.patch(url, {'total': str(data)})
+                fb.patch(url, {'total': data_json})
 
         except:
                 print('Failed to POST daily data')
@@ -63,9 +66,3 @@ def get_last_data_taken():
                 data_str = data_file.read()
                 data = json.loads(data_str)
                 return data
-
-
-if __name__ == '__main__':
-        
-        fb = firebase.FirebaseApplication("https://smart-campus-uma.firebaseio.com/", None)
-        post_people_data(2, fb)
