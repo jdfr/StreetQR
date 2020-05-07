@@ -77,6 +77,10 @@ if __name__ == "__main__":
                 # Override initial width and height
                 W = int(Cam.get(3))  # float
                 H = int(Cam.get(4))  # float
+                
+                if is_jetson:
+                        raise Exception("Video Files are not supported on Jetson Inference, use camera instead")
+                
         
         elif is_jetson:
                 # If in jetson platform initialize Cameras from CUDA (faster inferences)
