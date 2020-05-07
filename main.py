@@ -4,13 +4,11 @@ import cv2
 import sys
 import time
 from firebase import firebase
-
 from datetime import datetime as dt
 from utils import utils, classes, info, backend
 from trackers.bboxssd import BBox
 from trackers.bboxssdtracker import BBoxTracker
 from trackers.datatracker import DataTracker
-import platform
 import curses
 
 
@@ -31,13 +29,12 @@ if __name__ == "__main__":
         arch = "ssd-mobilenet-v2"
         overlay = "box,labels,conf"
         threshold = 0.7
-        W, H = (800, 480)
+        W, H = (640, 480)
         net = jetson.inference.detectNet(arch, sys.argv, threshold)
         
         # Start printing console
-        # console = curses.initscr()
+        console = curses.initscr()
         consoleConfig = info.ConsoleParams()
-        consoleConfig.system = platform.system()
         
         # Get array of classes detected by the net
         classes = classes.classesDict
@@ -47,12 +44,14 @@ if __name__ == "__main__":
         ]
         
         # Initialize Trackers
-        ped_tracker = BBoxTracker(15)
+        ped_tracker = BBoxTracker(50)
         data_tracker = DataTracker(ped_tracker)
         data_counter = info.DataCounter()
 
+        # Track actual minute day
         actual_min = dt.now().minute
         actual_day = dt.now().day
+        # whether people are crossing through the camera field
         people_crossing = False
 
         fb = firebase.FirebaseApplication("https://smart-campus-uma.firebaseio.com/", None)
@@ -197,6 +196,9 @@ if __name__ == "__main__":
                                 backend.post_daily_data(data_daily, fb)
                                 people_crossing = False
                         
+                        # Reset Minute Counters
+                        data_counter.reset_minute_counters()
+                        
                         # Every day
                         if actual_day != dt.now().day:
                                 actual_day = dt.now().day
@@ -205,7 +207,7 @@ if __name__ == "__main__":
                                 # Update Server Counters
                                 data_daily = data_counter.get_daily_data()
                                 backend.post_daily_data(data_daily, fb)
-
+                                
                 # ---------------------------------------
                 #
                 #           SHOWING PROGRAM INFO
@@ -215,10 +217,20 @@ if __name__ == "__main__":
                 # Transform CUDA MALLOC to NUMPY frame is
                 # highly computationally expensive for Jetson Platforms
                 if SHOW:
-                        
+                        # Configure Console Data
+                        consoleConfig.detected_people = people_crossing
+                        consoleConfig.total_minute_left = data_counter.total_minute_left
+                        consoleConfig.total_minute_right = data_counter.total_minute_right
+                        consoleConfig.total_minute = data_counter.total_minute
+                        consoleConfig.total_today_left = data_counter.total_today_left
+                        consoleConfig.total_today_right = data_counter.total_today_right
+                        consoleConfig.total_today = data_counter.total_today
                         consoleConfig.fps = 1.0 / (time.time() - start_time)
+                        
                         # SHOW DATA IN CONSOLE
-                        # info.print_console(console, consoleConfig)
+                        info.print_console(console, consoleConfig)
+                        
+                        # If not in Jetson Platform show Camera Frames and Detections
                         if not is_jetson:
 
                                 # Print square detections into frame

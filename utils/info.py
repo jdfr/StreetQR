@@ -5,6 +5,7 @@ from datetime import timedelta
 from collections import defaultdict
 import warnings
 import cv2
+import platform
 
 
 class DataCounter:
@@ -227,9 +228,16 @@ class ConsoleParams:
         Class containing parameters to be presented
         on terminal
         """
-        system: str
+        system: str = platform.system() + ' ' + platform.processor()
         fps: float
-        warnings: bool = False
+        detected_people: bool = False
+        total_minute_left: int = 0
+        total_minute_right: int = 0
+        total_minute: int = 0
+        total_today_left: int = 0
+        total_today_right: int = 0
+        total_today: int = 0
+
 
 
 def print_console(console, params: ConsoleParams):
@@ -239,22 +247,24 @@ def print_console(console, params: ConsoleParams):
         :param params: ConsoleParams object
         """
         fps = round(params.fps, 2)
-        
-        if params.warnings:
-                warnings = 'ON'
-        else:
-                warnings = "OFF"
-        
-        system = params.system
+        seconds = 59 - dt.now().second
+
         template = tabulate(
                 [
-                        ["WARNINGS:", warnings],
-                        ["FPS:", str(fps)]
+                        ["FPS:", str(fps)],
+                        ["Time", str(dt.now().hour) + ':' + str(dt.now().minute)],
+                        ["Data sent in (sec)", seconds],
+                        ["New Data", params.detected_people],
+                        ["--------------", '------------'],
+                        ["Minute Left/Right", str(params.total_minute_left) + '/' + str(params.total_minute_right)],
+                        ["TOTAL MINUTE", params.total_minute],
+                        ["Daily Left/Right", str(params.total_today_left) + '/' + str(params.total_today_right)],
+                        ["TOTAL DAILY", params.total_today]
                 ]
         )
         
         console.clear()
-        console.addstr(system + '\n')
+        console.addstr(params.system + '\n')
         console.addstr(template + '\n')
         
         console.refresh()
