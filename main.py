@@ -118,8 +118,11 @@ if __name__ == "__main__":
                 if is_jetson:
                         
                         # get frame from crosswalk and detect
+                        #print("BEFORE GETTING SNAPSHOT")
                         crosswalkMalloc, _, _ = Cam.CaptureRGBA()
+                        #print("BEFORE DETECTING WITH DEEP LEARNING")
                         pedestrianDetections = net.Detect(crosswalkMalloc, W, H, overlay)
+                        #print("AFTER DETECTING WITH DEEP LEARNING")
 
                 # If we are NOT on jetson use CV2
                 else:
@@ -187,6 +190,10 @@ if __name__ == "__main__":
                 if actual_min != dt.now().minute:
                         actual_min = dt.now().minute
                         # Check if people crossed during the last minute
+                        #people_crossing = True
+                        #data_counter.add_left()
+                        #data_counter.add_left()
+                        #data_counter.add_right()
                         if people_crossing:
                                 # if so, send new data to server
                                 data_minute = data_counter.get_minute_data()
