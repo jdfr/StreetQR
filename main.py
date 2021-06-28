@@ -238,7 +238,7 @@ if __name__ == "__main__":
                         info.print_console(consoleConfig)
                         
                         # If not in Jetson Platform show Camera Frames and Detections
-                        if not is_jetson:
+                        if False:# not is_jetson:
 
                                 # Print square detections into frame
                                 crosswalkFrame = info.print_items_to_frame(crosswalkFrame, pedestrians)
