@@ -9,8 +9,7 @@ from utils import utils, classes, info, backend
 from trackers.bboxssd import BBox
 from trackers.bboxssdtracker import BBoxTracker
 from trackers.datatracker import DataTracker
-import curses
-
+#import curses
 
 if __name__ == "__main__":
         
@@ -33,7 +32,7 @@ if __name__ == "__main__":
         net = jetson.inference.detectNet(arch, sys.argv, threshold)
         
         # Start printing console
-        console = curses.initscr()
+        #console = curses.initscr()
         consoleConfig = info.ConsoleParams()
         
         # Get array of classes detected by the net
@@ -228,7 +227,8 @@ if __name__ == "__main__":
                         consoleConfig.fps = 1.0 / (time.time() - start_time)
                         
                         # SHOW DATA IN CONSOLE
-                        info.print_console(console, consoleConfig)
+                        #info.print_console(console, consoleConfig)
+                        info.print_console(consoleConfig)
                         
                         # If not in Jetson Platform show Camera Frames and Detections
                         if not is_jetson:
@@ -252,6 +252,6 @@ if __name__ == "__main__":
                 if key == ord("q"):
 
                         # close any open windows
-                        curses.endwin()
+                        #curses.endwin()
                         cv2.destroyAllWindows()
                         break
