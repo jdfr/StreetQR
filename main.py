@@ -3,7 +3,11 @@ import jetson.utils
 import cv2
 import sys
 import time
-from firebase import firebase
+import os
+import datetime
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
 from datetime import datetime as dt
 from utils import utils, classes, info, backend
 from trackers.bboxssd import BBox
@@ -22,7 +26,23 @@ if __name__ == "__main__":
         # Show live results
         # when production set this to False as it consume resources
         SHOW = True
-        VIDEO = True
+        VIDEO = False
+
+        firebase_project_id = "streetqr"
+        firebase_private_key_path = os.path.abspath("streetqrm.json")
+        cred = credentials.Certificate(firebase_private_key_path)
+        firebase_admin.initialize_app(cred, {
+          'projectId': firebase_project_id,
+        })
+
+        fb = firestore.client()
+
+        doc_ref = fb.collection('log').document("streetqr_start")
+        start_log = {}
+        start_log["name"] = "streetqr"
+        start_log["date"] = "test"
+        print(start_log)
+        doc_ref.set(start_log)
         
         # load the object detection network
         arch = "ssd-mobilenet-v2"
@@ -53,7 +73,6 @@ if __name__ == "__main__":
         # whether people are crossing through the camera field
         people_crossing = False
 
-        fb = firebase.FirebaseApplication("https://smart-campus-uma.firebaseio.com/", None)
         # check if running on jetson
         is_jetson = utils.is_jetson_platform()
 
