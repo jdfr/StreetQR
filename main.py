@@ -15,6 +15,12 @@ from trackers.bboxssdtracker import BBoxTracker
 from trackers.datatracker import DataTracker
 #import curses
 
+isdaemon = "DAEMONIZE_ME" in os.environ and os.environ["DAEMONIZE_ME"] in ["on", "1", "true"]
+
+if isdaemon:
+  import systemd.daemon
+
+
 if __name__ == "__main__":
         
         # ---------------------------------------
@@ -122,6 +128,10 @@ if __name__ == "__main__":
         # ---------------------------------------
 
         print('[*] Starting MAIN LOOP [*]')
+        if isdaemon:
+          systemd.daemon.notify('READY=1')
+          timestart = datetime.datetime.now()
+          minute_count = -1
         
         while True:
                 
@@ -241,7 +251,24 @@ if __name__ == "__main__":
                 
                 # Transform CUDA MALLOC to NUMPY frame is
                 # highly computationally expensive for Jetson Platforms
-                if SHOW:
+                if isdaemon:
+                  time_delta = datetime.datetime.now() - timestart
+                  #print(time_delta)
+                  systemd.daemon.notify('WATCHDOG=1')
+                  delta_minutes = time_delta.seconds // 60
+                  if delta_minutes!=minute_count:
+                    # Configure Console Data
+                    consoleConfig.detected_people = people_crossing
+                    consoleConfig.total_minute_left = data_counter.total_minute_left
+                    consoleConfig.total_minute_right = data_counter.total_minute_right
+                    consoleConfig.total_minute = data_counter.total_minute
+                    consoleConfig.total_today_left = data_counter.total_today_left
+                    consoleConfig.total_today_right = data_counter.total_today_right
+                    consoleConfig.total_today = data_counter.total_today
+                    consoleConfig.fps = 1.0 / (time.time() - start_time)
+                    info.print_console(consoleConfig)
+                    minute_count = delta_minutes
+                elif SHOW:
                         # Configure Console Data
                         consoleConfig.detected_people = people_crossing
                         consoleConfig.total_minute_left = data_counter.total_minute_left
@@ -274,8 +301,9 @@ if __name__ == "__main__":
                 # ----------------------------------
 
                 # Quit program pressing 'q'
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord("q"):
+                if not isdaemon:
+                  key = cv2.waitKey(1) & 0xFF
+                  if key == ord("q"):
 
                         # close any open windows
                         #curses.endwin()
