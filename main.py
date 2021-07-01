@@ -20,6 +20,10 @@ isdaemon = "DAEMONIZE_ME" in os.environ and os.environ["DAEMONIZE_ME"] in ["on",
 if isdaemon:
   import systemd.daemon
 
+# do "touch /home/username/Desktop/StreetQR/gimmeit" to get snapshots from both cameras
+saveFilesOnDemand = isdaemon
+saveFileThisTime  = False
+
 
 if __name__ == "__main__":
         
@@ -136,6 +140,15 @@ if __name__ == "__main__":
         while True:
                 
                 start_time = time.time()  # start time of the loop
+
+                if saveFilesOnDemand and os.path.isfile('gimmeit'):
+                   try:
+                     os.remove('gimmeit')
+                   except:
+                     pass
+                   saveFileThisTime = True
+
+
                 
                 # ---------------------------------------
                 #
@@ -148,7 +161,9 @@ if __name__ == "__main__":
                         
                         # get frame from crosswalk and detect
                         #print("BEFORE GETTING SNAPSHOT")
-                        crosswalkMalloc, _, _ = Cam.CaptureRGBA()
+                        crosswalkMalloc, _, _ = Cam.CaptureRGBA(zeroCopy=saveFileThisTime)
+                        if saveFileThisTime:
+                          crosswalk_numpy_img = jetson.utils.cudaToNumpy(crosswalkMalloc, W, H, 4)
                         #print("BEFORE DETECTING WITH DEEP LEARNING")
                         pedestrianDetections = net.Detect(crosswalkMalloc, W, H, overlay)
                         #print("AFTER DETECTING WITH DEEP LEARNING")
@@ -268,6 +283,12 @@ if __name__ == "__main__":
                     consoleConfig.fps = 1.0 / (time.time() - start_time)
                     info.print_console(consoleConfig)
                     minute_count = delta_minutes
+                  if saveFileThisTime:
+                    saveFileThisTime = False
+                    crosswalk_numpy_img = info.print_items_to_frame(crosswalk_numpy_img, pedestrians)
+                    stamp = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
+                    cv2.imwrite('crosswalk.%s.jpg' % stamp, crosswalk_numpy_img)
+                    del crosswalk_numpy_img
                 elif SHOW:
                         # Configure Console Data
                         consoleConfig.detected_people = people_crossing

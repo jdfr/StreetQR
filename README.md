@@ -25,3 +25,10 @@ tracking basado en superficie que monitorea la posición de cada objeto dentro d
 ![Track_01.png](images/Machine%20Learning/Track_01.png)
 ![Track_02.png](images/Machine%20Learning/Track_02.png)
 
+## Setup
+
+You can configure this app as a systemd service that will be started automatically
+upon reboot, and restarted if crashed.
+
+Currently, if started as a systemd daemon, the app will save a snapshot from the camera
+everytime a file named "gimmeit" is created in its working directory.
