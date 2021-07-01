@@ -59,7 +59,7 @@ if __name__ == "__main__":
         overlay = "box,labels,conf"
         threshold = 0.7
         W, H = (640, 480)
-        net = jetson.inference.detectNet(arch, sys.argv, threshold)
+        net = jetson.inference.detectNet(arch, sys.argv+["--log-level=error"], threshold)
         
         # Start printing console
         #console = curses.initscr()
