@@ -21,7 +21,7 @@ if isdaemon:
   import systemd.daemon
 
 # do "touch /home/username/Desktop/StreetQR/gimmeit" to get snapshots from both cameras
-saveFilesOnDemand = isdaemon
+saveFilesOnDemand = True
 saveFileThisTime  = False
 
 
