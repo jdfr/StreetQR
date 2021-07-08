@@ -12,96 +12,34 @@ class DataCounter:
         """
         Class that summarizes pedestrian info
         """
-        
+
         def __init__(self):
-                
                 self.total_minute_left = 0
                 self.total_minute_right = 0
                 self.total_minute = 0
                 self.total_today_left = 0
                 self.total_today_right = 0
                 self.total_today = 0
-                self.actual_min = dt.now().minute
-                self.actual_day = dt.now().day
-                
-                self.memory = defaultdict(self.build_data)
-                
+
         def add_right(self):
                 """
                 Update right counter and save values
                 """
-                self.check_time()
-                self.update_right_counters()
-                self.save_counters()
-        
+                self.total_minute_right += 1
+                self.total_today_right += 1
+                self.total_minute += 1
+                self.total_today += 1
+
         def add_left(self):
                 """
                 Checks Actual time
                 Update left counter and save values
                 """
-                self.check_time()
-                self.update_left_counters()
-                self.save_counters()
-
-        def update_left_counters(self):
-                """
-                Update Left Counters
-                """
                 self.total_minute_left += 1
                 self.total_today_left += 1
-                self.update_totals()
+                self.total_minute += 1
+                self.total_today += 1
 
-        def update_right_counters(self):
-                """
-                Update Right Counters
-                """
-                self.total_minute_right += 1
-                self.total_today_right += 1
-                self.update_totals()
-
-        def check_day(self):
-                """
-                Checks if day is over and resets daily Counters and stored data
-                """
-        
-                if self.actual_day != dt.now().day:
-                        
-                        self.reset_daily_counters()
-                        self.update_actual_day()
-                        self.clear_memory()
-
-        def check_time(self):
-                """
-                Checks if minute is over and resets minute Counters
-                Then checks is day is over
-                """
-                
-                if self.actual_min != dt.now().minute:
-                        self.reset_minute_counters()
-                        self.update_actual_min()
-                        self.check_day()
-                        
-        def update_totals(self):
-                """
-                Summarizes left and right counters
-                """
-                
-                self.total_minute = self.total_minute_left + self.total_minute_right
-                self.total_today = self.total_today_left + self.total_today_right
-                
-        def update_actual_day(self):
-                """
-                Sets actual day, int 0..31
-                """
-                self.actual_day = dt.now().day
-                
-        def update_actual_min(self):
-                """
-                Sets actual minute, int 0..59
-                """
-
-                self.actual_min = dt.now().minute
-                
         def reset_minute_counters(self):
                 """
                 Resets minute counters to zero
@@ -109,7 +47,6 @@ class DataCounter:
                 self.total_minute_left = 0
                 self.total_minute_right = 0
                 self.total_minute = 0
-
 
         def reset_daily_counters(self):
                 """
@@ -119,110 +56,35 @@ class DataCounter:
                 self.total_today_right = 0
                 self.total_today = 0
 
-                
-        def get_strftime_by_hour_minute(self, hour, minute):
-                """
-                Returns self.memory key as str hour:min
-                :return: str, hour:min
-                """
-                return dt.today().replace(hour=hour, minute=minute).strftime("%H:%M")
-                
-        def get_last_strftime(self):
-                """
-                Returns last minute self.memory key as str hour:min
-                :return: str, hour:min
-                """
-                hour_min = dt.now() - timedelta(minutes=1)
-                hour_min = hour_min.strftime("%H:%M")
-                return hour_min
-                
-        def get_data(self, hour=None, minute=None):
-                """
-                Get self.memory bu hour and minute
-                :param hour: int, 0..23
-                :param minute: int, 0..59
-                :return: dict, all counters values
-                """
-                
-                hour_min = self.get_last_strftime()
-                if hour and minute:
-                        hour_min = self.get_strftime_by_hour_minute(hour, minute)
-                        
-                if (hour is None) ^ (minute is None):
-                        message = "Hour and Min Params must be filled. Actual value: {}:{}. ".format(hour, minute) + \
-                                  "Using last hour minute data: " + hour_min
-                        warnings.warn(message)
-                        
-                data = self.memory[hour_min]
-                return data
-        
-        def get_minute_data(self, hour=None, minute=None):
+        def get_minute_data(self):
                 """
                 Get just minute counters values
                 :param hour: int, 0..23, hour of the counter
                 :param minute: int, 0..59, minute of the counter
                 :return: dict, minute counter values
                 """
-                
-                data = self.get_data(hour=hour, minute=minute)
-                minute_data = {}
-                for key, value in data.items():
-                        if 'm' in key:
-                                minute_data[key] = value
-                
-                return minute_data
+                return {
+                        'lm': self.total_minute_left,
+                        'rm': self.total_minute_right,
+                        "tm": self.total_minute,
+                }
 
         def get_daily_data(self):
                 """
                 Get just daily counters values
                 :return dict, daily counter values
                 """
-                data = self.build_data()
-                daily_data = {}
-                for key, value in data.items():
-                        if 'd' in key:
-                                daily_data[key] = value
-        
-                return daily_data
-                
-        def build_data(self):
-                """
-                Builds a dict with actual counters values
-                :return: dict, actual counters values
-                """
-                
-                data = {
-                        'lm': self.total_minute_left,
-                        'rm': self.total_minute_right,
-                        "tm": self.total_minute,
+                return {
                         'ld': self.total_today_left,
                         'rd': self.total_today_right,
                         "td": self.total_today
                 }
-                
-                return data
-
-        def save_counters(self):
-                """
-                Save counters values to self.memory
-                Hour:min as KEY and dict as VALUE
-                """
-                
-                hour_min = self.get_last_strftime()
-                data = self.build_data()
-                self.memory[hour_min] = data
-                
-        def clear_memory(self):
-                """
-                Restarts memory values
-                """
-                self.memory.clear()
 
         def reset(self):
                 self.reset_minute_counters()
                 self.reset_daily_counters()
-                self.clear_memory()
-        
+
+
 class ConsoleParams:
         """
         Class containing parameters to be presented
