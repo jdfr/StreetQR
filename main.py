@@ -218,7 +218,7 @@ if __name__ == "__main__":
                 #           POST DATA TRACKING
                 #
                 # ---------------------------------------
-                
+
                 # add people walking directions to counter
                 for direction in removed_pedestrians_directions:
                         if direction == 'left':
@@ -229,7 +229,7 @@ if __name__ == "__main__":
                         # data can be sent to server
                         # otherwise no data is sent
                         people_crossing = True
-                
+
                 # Every minute
                 if actual_min != dt.now().minute:
                         actual_min = dt.now().minute
@@ -245,10 +245,10 @@ if __name__ == "__main__":
                                 backend.post_minute_data(data_minute, fb)
                                 backend.post_daily_data(data_daily, fb)
                                 people_crossing = False
-                        
+
                         # Reset Minute Counters
                         data_counter.reset_minute_counters()
-                        
+
                         # Every day
                         if actual_day != dt.now().day:
                                 actual_day = dt.now().day
@@ -257,7 +257,8 @@ if __name__ == "__main__":
                                 # Update Server Counters
                                 data_daily = data_counter.get_daily_data()
                                 backend.post_daily_data(data_daily, fb)
-                                
+                                data_counter.reset_daily_counters()
+
                 # ---------------------------------------
                 #
                 #           SHOWING PROGRAM INFO
