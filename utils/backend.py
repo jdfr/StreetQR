@@ -38,10 +38,11 @@ def post_daily_data(data, fb):
 
         now = datetime.datetime.now()
         day = now.date()
+        daystr = now.strftime("%Y:%m:%d")
 
         # Post Data
         try:
-                doc_ref = fb.collection('daily_data').document(day)
+                doc_ref = fb.collection('daily_data').document(daystr)
                 doc_ref.set(data) #data_json)
 
         except:
