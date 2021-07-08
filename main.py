@@ -25,6 +25,10 @@ saveFilesOnDemand = True
 saveFileThisTime  = False
 
 
+recordDetections = True
+detectionsLog = 'detections.log'
+recordThisTime = False
+
 if __name__ == "__main__":
         
         # ---------------------------------------
@@ -46,6 +50,9 @@ if __name__ == "__main__":
         })
 
         fb = firestore.client()
+
+        if recordDetections:
+          detectfile = open(detectionsLog, 'at')
 
         doc_ref = fb.collection('log').document("streetqr_start")
         start_log = {}
@@ -161,8 +168,9 @@ if __name__ == "__main__":
                         
                         # get frame from crosswalk and detect
                         #print("BEFORE GETTING SNAPSHOT")
-                        crosswalkMalloc, _, _ = Cam.CaptureRGBA(zeroCopy=saveFileThisTime)
-                        if saveFileThisTime:
+                        doZeroCopy = recordDetections or saveFileThisTime
+                        crosswalkMalloc, _, _ = Cam.CaptureRGBA(zeroCopy=doZeroCopy)
+                        if doZeroCopy:
                           crosswalk_numpy_img = jetson.utils.cudaToNumpy(crosswalkMalloc, W, H, 4)
                         #print("BEFORE DETECTING WITH DEEP LEARNING")
                         pedestrianDetections = net.Detect(crosswalkMalloc, W, H, overlay)
@@ -196,15 +204,33 @@ if __name__ == "__main__":
                 
                 # Initialize bounding boxes lists
                 ped_bboxes = []
+                ped_idxs = []
                 
                 # Convert Crosswalk Detections to Bbox object
                 # filter detections if recognised as pedestrians
                 # add to pedestrian list of bboxes
+                ped_idx = 0
                 for detection in pedestrianDetections:
                         bbox = BBox(detection)
                         if bbox.name in pedestrian_classes:
+                                recordThisTime = recordDetections
                                 ped_bboxes.append(bbox)
-                
+                                ped_idxs.append(ped_idx)
+                        ped_idx += 1
+
+                if recordThisTime:
+                  detectTimestamp = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M.%f")
+                  cv2.imwrite('detect.crosswalk.%s.jpg' % detectTimestamp, crosswalk_numpy_img)
+                  detectfile.write("\n----------\n-- RAW DETECTIONS AT %s\n" % detectTimestamp)
+                  for d in pedestrianDetections:
+                    detectfile.write("%s\n" % str(d))
+                  try:
+                    detectfile.write("-- PEDESTRIANS (INDEXES DETECTIONS): %s\n" % str(ped_idxs))
+                  except:
+                    pass
+                  recordThisTime = False
+                  detectfile.flush()
+
                 # Relate previous detections to new ones
                 # updating trackers
                 pedestrians = ped_tracker.update(ped_bboxes)
