@@ -248,13 +248,17 @@ if __name__ == "__main__":
                 # add people walking directions to counter
                 for direction in removed_pedestrians_directions:
                         if direction == 'left':
-                                data_counter.add_left()
+                          data_counter.add_left()
+                          # If anyone has crossed the camera field
+                          # data can be sent to server
+                          # otherwise no data is sent
+                          people_crossing = True
                         if direction == 'right':
-                                data_counter.add_right()
-                        # If anyone has crossed the camera field
-                        # data can be sent to server
-                        # otherwise no data is sent
-                        people_crossing = True
+                          data_counter.add_right()
+                          # If anyone has crossed the camera field
+                          # data can be sent to server
+                          # otherwise no data is sent
+                          people_crossing = True
 
                 # Every minute
                 if actual_min != dt.now().minute:
